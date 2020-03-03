@@ -1,7 +1,6 @@
 <template>
-  <div id="app" :class="typeof weather.main != 'undefined' && (weather.main.temp > 16 && weather.main.temp <= 29 ? 'warm' : ''
-    || weather.main.temp <= 16 && weather.main.temp > 0 ? 'cold' : '' || weather.main.temp < 0 ? 'freeze' : ''|| weather.main.temp > 29 ? 'hot' : '')">
-    
+  <div id="app" :class="typeof weather.list != 'undefined' && (weather.list[0].main.temp > 16 && weather.list[0].main.temp <= 29 ? 'warm' : ''
+    || weather.list[0].main.temp <= 16 && weather.list[0].main.temp > 0 ? 'cold' : '' || weather.list[0].main.temp < 0 ? 'freeze' : ''|| weather.list[0].main.temp > 29 ? 'hot' : '')">
     <main>
       <div class="container" style="padding: 20px">
         <div class="searchbox">
@@ -14,30 +13,53 @@
           />
         </div>
       </div>
-      <div class="weatherwrap" v-if="typeof weather.main != 'undefined'">
+      <div class="weatherwrap" v-if="typeof weather.list != 'undefined'">
         
         <div class="infobox">
-          <div class="column"><i class="fas fa-cloud icon"></i> {{ weather.clouds.all }}%</div>
-          <div class="column"><i class="fas fa-wind icon"></i> {{ weather.wind.speed }}m/s</div>
-          <div class="column"><i class="fas fa-tint icon"></i> {{ weather.main.humidity }}% </div>
+          <div class="column"><i class="fas fa-cloud icon"></i> {{ weather.list[0].clouds.all }}%</div>
+          <div class="column"><i class="fas fa-wind icon"></i> {{ weather.list[0].wind.speed }}m/s</div>
+          <div class="column"><i class="fas fa-tint icon"></i> {{ weather.list[0].main.humidity }}% </div>
         </div>
         
         <div class="weatherbox">
-          <div class="temp">{{ Math.round(weather.main.temp) }}°C</div>
+          <div class="temp">{{ Math.round(weather.list[0].main.temp) }}°C</div>
           <div class="tempbox">
             <div class="tempcolumn"></div>
-            <div class="tempcolumn"><i class="fas fa-arrow-up"></i> {{ Math.round(weather.main.temp_max) }}°C</div>
-            <div class="tempcolumn"><i class="fas fa-arrow-down"></i> {{ Math.round(weather.main.temp_min) }}°C</div>
+            <div class="tempcolumn"><i class="fas fa-arrow-up"></i> {{ Math.round(weather.list[0].main.temp_max) }}°C</div>
+            <div class="tempcolumn"><i class="fas fa-arrow-down"></i> {{ Math.round(weather.list[0].main.temp_min) }}°C</div>
             <div class="locationbox"></div>
         </div>
         </div>
 
         <div class="locationbox">
-          <div class="location">{{ weather.name }}, {{ weather.sys.country }}</div>
-          <div class="weather">{{ weather.weather[0].main }}</div>
-          <div class="weathericon"><i :class="`owf owf-${ weather.weather[0].id } owf-4x`"></i></div>
+          <div class="location">{{ weather.city.name }}, {{ weather.city.country }}</div>
+          <div class="weather">{{ weather.list[0].weather[0].main }}</div>
+          <div class="weathericon"><i :class="`owf owf-${ weather.list[0].weather[0].id } owf-4x`"></i></div>
         </div>
-
+        
+        <div class="forecastbox">
+          <div class="icon"><i :class="`owf owf-${ weather.list[4].weather[0].id } owf-2x`"></i></div>
+          <div class="date">Tomorrow ° {{ weather.list[4].weather[0].main }}</div>
+          <div class="temp">{{ Math.round(weather.list[4].main.temp) }}°C</div>
+        </div>
+        
+        <div class="forecastbox">
+          <div class="icon"><i :class="`owf owf-${ weather.list[12].weather[0].id } owf-2x`"></i></div>
+          <div class="date">{{ ttday }} ° {{ weather.list[12].weather[0].main }}</div>
+          <div class="temp">{{ Math.round(weather.list[12].main.temp) }}°C</div>
+        </div>
+        
+        <div class="forecastbox">
+          <div class="icon"><i :class="`owf owf-${ weather.list[20].weather[0].id } owf-2x`"></i></div>
+          <div class="date">{{ tttday }} ° {{ weather.list[20].weather[0].main }}</div>
+          <div class="temp">{{ Math.round(weather.list[20].main.temp) }}°C</div>
+        </div>
+        
+        <div class="forecastbox">
+          <div class="icon"><i :class="`owf owf-${ weather.list[28].weather[0].id } owf-2x`"></i></div>
+          <div class="date">{{ ttttday }} ° {{ weather.list[28].weather[0].main }}</div>
+          <div class="temp">{{ Math.round(weather.list[28].main.temp) }}°C</div>
+        </div>
         
       </div>
     </main>
@@ -55,6 +77,9 @@ export default {
       url_base: 'https://api.openweathermap.org/data/2.5/',
       query: '',
       weather: {},
+      tday: '',
+      ttday: '',
+      tttday: '',
       position: null
     }
   },
@@ -63,7 +88,7 @@ export default {
     if(navigator.geolocation){
        navigator.geolocation.getCurrentPosition(position => {
         this.position = position.coords;
-        fetch(`${this.url_base}weather?lat=${Math.round(this.position.latitude)}&lon=${Math.round(this.position.longitude)}&units=metric&appid=${this.api_key}`)
+        fetch(`${this.url_base}forecast?lat=${Math.round(this.position.latitude)}&lon=${Math.round(this.position.longitude)}&units=metric&appid=${this.api_key}`)
         .then(res => {
           return res.json();
         }).then(this.setResults);
@@ -75,7 +100,7 @@ export default {
 
     fetchWeather(e) {
       if(e.key == "Enter") {
-        fetch(`${this.url_base}weather?q=${this.query}&units=metric&appid=${this.api_key}`)
+        fetch(`${this.url_base}forecast?q=${this.query}&units=metric&appid=${this.api_key}`)
         .then(res => {
           return res.json();
         }).then(this.setResults);
@@ -84,6 +109,11 @@ export default {
 
     setResults(results) {
       this.weather = results;
+      let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      this.tday = days[new Date(this.weather.list[4].dt * 1000).getDay()];
+      this.ttday = days[new Date(this.weather.list[12].dt * 1000).getDay()];
+      this.tttday = days[new Date(this.weather.list[20].dt * 1000).getDay()];
+      this.ttttday = days[new Date(this.weather.list[28].dt * 1000).getDay()];
     },
 
     setTime() {
@@ -141,7 +171,7 @@ body {
 }
 
 main {
-  height: 800px;
+  height: 1000px;
   background-image: linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.75));
   box-shadow: 0px 0px 16px rgba(0,0,0,0.25);
 }
@@ -177,6 +207,7 @@ main {
 .locationbox {
   float:none;
   text-align: center;
+  margin-bottom: 30px;
 }
 
 .locationbox .location {
@@ -250,16 +281,51 @@ main {
 }
 
 .icon {
-  font-size: 25px;
-  margin-right: 3px;
+  font-size: 29px;
+}
+
+.forecastbox {
+  margin: 10px;
+  display: table;
+  clear: both;
+  width: 95%;
+  text-align: left;
+  color: #FFF;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 0px 16px 0px 16px;
+  box-shadow: 3px 6px rgba(0,0,0,0.25);
+}
+
+.forecastbox .icon {
+  text-align: left;
+  float: left;
+  width: 15%;
+  padding: 10px;
+  color: #FFF;
+  font-size: 19px;
+}
+
+.forecastbox .date {
+  text-align: left;
+  float: left;
+  width: 66%;
+  padding: 10px;
+  color: #FFF;
+  font-size: 17px;
+}
+
+.forecastbox .temp {
+  text-align: left;
+  float: left;
+  width: 16%;
+  padding: 10px;
+  color: #FFF;
+  font-size: 17px;
 }
 
 @media only screen and (max-width: 600px) {
   body {
     padding: 0;
-  }
-  main {
-    height: 100vh;
   }
 }
 </style>
